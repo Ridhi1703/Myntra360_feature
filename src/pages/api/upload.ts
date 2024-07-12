@@ -6,7 +6,6 @@ import fs from 'fs';
 import path from 'path';
 import cloudinary from '@/utils/cloudinary';
 
-
 export const config = {
   api: {
     bodyParser: false,
@@ -16,7 +15,7 @@ export const config = {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const form = new formidable.IncomingForm();
 
-  form.uploadDir = path.join(process.cwd(), '../public/models');
+  form.uploadDir = path.join(process.cwd(), 'public', 'uploads');
   form.keepExtensions = true;
 
   form.parse(req, async (err, fields, files) => {
@@ -24,29 +23,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'Error parsing the files' });
     }
 
-    // Ensure photos field exists
     if (!files.photos || !Array.isArray(files.photos)) {
       return res.status(400).json({ error: 'No photos provided' });
     }
 
     try {
-      // Upload images to Cloudinary
       const uploadPromises = files.photos.map((file: formidable.File) =>
         cloudinary.uploader.upload(file.path, {
-          folder: '3d-models',
+          folder: '3d-models', // Specify the folder in Cloudinary
+          upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET, // Use the upload preset
         })
       );
 
       const uploadResults = await Promise.all(uploadPromises);
 
-      // Assume the 3D model generation API is available at this endpoint
-      const modelGenerationUrl = 'https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/auto/upload';
+      const modelGenerationUrl = `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/auto/upload`;
 
       const response = await fetch(modelGenerationUrl, {
         method: 'POST',
         body: JSON.stringify({
           file: uploadResults.map(result => result.secure_url),
-          upload_preset: 'YOUR_UPLOAD_PRESET',
+          upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET, // Adjust according to your Cloudinary settings
         }),
         headers: {
           'Content-Type': 'application/json',

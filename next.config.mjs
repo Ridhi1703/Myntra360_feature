@@ -1,6 +1,11 @@
 
 
+import dotenv from 'dotenv';
+dotenv.config();
 /** @type {import('next').NextConfig} */
+// next.config.js or server.js
+
+
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
